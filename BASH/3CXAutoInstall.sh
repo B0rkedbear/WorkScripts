@@ -16,13 +16,13 @@
     and prompts for sudo.
 
     Updates;
-    v1.0 -  20/09/2025 - Initial working version, tested on local VM. (18/09/2025)
-    v1.1 -  20/09/2025 - Updated script to handle "Configuring openssh-server" when updating on systems that have a modified version of "/etc/ssh/sshd_config". 
-            Added link to "PBX Web configuration tool" with PublicIP at end for installs on cloud services such as Azure and AWS.
+    v1.0 -  20/09/2025  - Initial working version, tested on local VM. (18/09/2025)
+    v1.1 -  20/09/2025  - Updated script to handle "Configuring openssh-server" when updating on systems that have a modified version of "/etc/ssh/sshd_config". 
+                        - Added link to "PBX Web configuration tool" with PublicIP at end for installs on cloud services such as Azure and AWS.
 '
+mkdir -p /tmp/3CX
 SCRIPTPATH=/tmp/3CX
 apt-get update && apt-get install expect -y
-mkdir -p $SCRIPTPATH
 cat <<EOF > $SCRIPTPATH/3cxInstall.sh
 #!/bin/bash
 apt-get update && apt-get upgrade -y
