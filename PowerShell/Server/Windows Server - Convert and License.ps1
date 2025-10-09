@@ -24,7 +24,7 @@
 #>
 
 $License = "TVRH6-WHNXV-R9WG3-9XRFY-MY832"
-$LogPath = "$env:ProgramData\WorkScripts\ActivateServer\$((Get-Date -F 'yyyyMMdd-HHmmss'))"
+$LogPath = "$env:ProgramData\WorkScripts\ActivateServer\"
 $AvailableEditions = (Get-WindowsEdition -Online -Target).Edition
 $CurrentEdition = (Get-WindowsEdition -Online).Edition
 
@@ -33,24 +33,19 @@ If(!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::
     Write-Host "Press any key to quit...";
     $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
     Exit
-} Else {
-    If(!(Test-Path -Path $LogPath)){New-Item -ItemType "Directory" -Path $LogPath *> $null}
-    Try {
-        $DISMModule = Get-Module -ListAvailable "DISM"
-        If(!($DISMModule)) {
-            Write-Output "DISM module missing. Attempting to install."
-    		Install-Module DISM -Force -Confirm:$False
-            Import-Module DISM -DisableNameChecking
-        } Else {
-            Write-Output "Importing DISM module."
-            Import-Module DISM -DisableNameChecking
-        }
-    } Catch {
-        Write-Output "Error: $($_.Exception.Message)" 
-        Exit
-    }
 }
+If(!(Test-Path -Path $LogPath)){New-Item -ItemType "Directory" -Path $LogPath *> $null}
 Start-Transcript -path $LogPath\log.txt
+
+$DISMModule = Get-Module -ListAvailable "DISM"
+If(!($DISMModule)) {
+    Write-Output "DISM module missing. Attempting to install."
+	Install-Module DISM -Force -Confirm:$False
+    Import-Module DISM -DisableNameChecking
+} Else {
+    Write-Output "Importing DISM module."
+    Import-Module DISM -DisableNameChecking
+}
 
 For ($i = 0; $i -lt $AvailableEditions.Count; $i++) {
     Write-Host "[$($i + 1)] $($AvailableEditions[$i])"

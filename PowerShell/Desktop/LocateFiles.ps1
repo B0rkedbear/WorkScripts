@@ -1,6 +1,5 @@
 ﻿<#
-    LocateFiles v1.0
-
+    Script: LocateFiles v1.0
     Author: Chris Higham
     Date: 03/07/2025
 
@@ -19,31 +18,44 @@
 
     Uses "Start-Transcript" cmdlet to log output whilst searching to help identify if the account running the script
     doesn't have access to any subfolders being scanned.
+
+    Updates;
+    v1.1 - Updated code to find files that match search parameters in order
+    
 #>
 
 $Path = "C:\Company Data\Shares"
-$Formats = "*.doc","*.xls","*.ppt"
+$Extensions = "*.doc","*.xls","*.ppt"
 $TotalFiles = 0
-$LogPath = "$env:ProgramData\WorkScripts\LocateFiles\$((Get-Date -F 'yyyyMMdd-HHmmss'))"
-$CSV = "$LogPath\FileReport.CSV"
+$LogPath = "$env:ProgramData\WorkScripts\LocateFiles"
 If(!(Test-Path -Path $LogPath)){New-Item -ItemType "Directory" -Path $LogPath *> $null}
-Start-Transcript -path $LogPath\TerminalLog.txt
-    Write-Host ""
-    Write-Host "Searching for files with the extensions $Formats within $Path in it's subfolders"
-    Write-Host ""
-    ### Creates CSV for report then finds relevant files and their full path
-    Get-ChildItem -Path $Path -Recurse -Include @($Formats) | ForEach-Object {
-        [PSCustomObject]@{
-            FilePath = $_.DirectoryName
-            FileName = $_.BaseName
-            FileExtension = $_.Extension
-            FileSize = $_.Length
+
+# Make files report root first 
+$queue = New-Object System.Collections.Generic.Queue[System.IO.DirectoryInfo]
+$queue.Enqueue((Get-Item $path))
+$results = @()
+while ($queue.Count -gt 0) {
+    $currentDir = $queue.Dequeue()
+    # Find matching files in current directory
+    foreach ($ext in $extensions) {
+        Get-ChildItem -Path $currentDir.FullName -Filter $ext -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $results += [PSCustomObject]@{
+                FilePath      = $_.DirectoryName
+                FileName      = $_.BaseName
+                FileExtension = $_.Extension
+            }
+            Write-Host -ForegroundColor Green "$($_.FullName)"
+            $TotalFiles++
         }
-        Write-Host -ForegroundColor Green "$($_.FullName)"
-        $TotalFiles++
-    } | Export-CSV -Path $CSV -NoTypeInformation
-    
-    Write-Host ""
-    Write-Host "Found $TotalFiles files with the requested formats"
-    Write-Host "Results are saved as FileReport.csv in $LogPath"
-Stop-Transcript
+    }
+    # Queue subdirectories
+    Get-ChildItem -Path $currentDir.FullName -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        $queue.Enqueue($_)
+    }
+}
+
+# Export to CSV
+$results | Export-Csv -Path "$LogPath\FileReport.csv" -NoTypeInformation
+
+Write-Host "";"Found $TotalFiles files with the requested formats"
+Write-Host "Creatd report: $LogPath\FileReport.csv"
