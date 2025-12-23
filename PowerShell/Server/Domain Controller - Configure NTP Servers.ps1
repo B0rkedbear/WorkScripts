@@ -15,7 +15,7 @@ $W32Time = "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time"
 $NTPSyncValue = (Get-ItemProperty -Path "$W32Time\TimeProviders\NtpClient").SpecialPollInterval
 
 If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host -ForegroundColor Red "ERROR: Script must be ran as Administrator to install Windows Server license."
+    Write-Host -ForegroundColor Red "ERROR: Script must be ran as Administrator to configure NTP settings."
     Write-Host "Press any key to quit...";
     $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
     Exit
@@ -39,11 +39,12 @@ w32tm /unregister
 w32tm /register
 Start-Service -Name "w32time"
 tzutil /s "GMT Standard Time"
-w32tm /config /manualpeerlist:“uk.pool.ntp.org,0x8,time.windows.com,0x8,time.cloudflare.com,0x8” /syncfromflags:manual /reliable:yes /update
+w32tm /config /syncfromflags:manual /manualpeerlist:"uk.pool.ntp.org,0x8 time.windows.com,0x8 time.cloudflare.com,0x8"
+w32tm /config /reliable:yes
 w32tm /resync
 Stop-Service -Name "w32time"
 Start-Service -Name "w32time"
-
+w32tm /config /update
 ### Check poling interval
 Write-Output "The NTP polling rate is $NTPSyncValue seconds on this server."
 
