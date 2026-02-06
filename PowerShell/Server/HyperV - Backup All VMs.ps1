@@ -17,7 +17,7 @@ $BackupFolder = "$BackupRoot\$BackupDate"
 $LogFile = "$BackupFolder\Log.txt" 
 
 If(!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host -ForegroundColor Red "ERROR: Script must be ran as Administrator to install Windows Server license."
+    Write-Host -ForegroundColor Red "ERROR: Script must be ran as Administrator to perform Hyper-V backups."
     Exit
 }
 If(!(Test-Path -Path $BackupFolder)){New-Item -Path $BackupFolder -ItemType "Directory" *>$null}
