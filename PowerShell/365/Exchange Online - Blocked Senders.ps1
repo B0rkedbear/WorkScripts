@@ -20,40 +20,37 @@ $GlobalAdmin = "user@domain.com"
 $Path = [Environment]::GetFolderPath("MyDocuments")
 $CSV = "$Path\UserBlocklist.csv"
 
-Try {
-    If(!(Get-Module -ListAvailable "ExchangeOnlineManagement")) {
-        Write-Host -ForegroundColor Green "ExchangeOnlineManagement module missing. Attempting to install."
-        If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-            Write-Host -ForegroundColor Red "ERROR: Script must be ran as Administrator to install modules."
-            Write-Host "Press any key to quit...";
-            $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
-            Exit
-        }
-        Install-Module ExchangeOnlineManagement -Force -Confirm:$False
-        Write-Host -ForegroundColor Green "ExchangeOnlineManagement install successful!";"Importing ExchangeOnlineManagement module."
-        Import-Module ExchangeOnlineManagement -DisableNameChecking
-    } Else {
-        Write-Host -ForegroundColor Green "Importing ExchangeOnlineManagement module."
-        Import-Module ExchangeOnlineManagement -DisableNameChecking
-    }
-} Catch {
-    Write-Host -ForegroundColor Red "Error: $($_.Exception.Message)"
+If (!(Get-Module -ListAvailable "ExchangeOnlineManagement")) {
+  Write-Host -ForegroundColor Green "ExchangeOnlineManagement module missing. Attempting to install."
+  If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host -ForegroundColor Red "ERROR: Script must be ran as Administrator to install modules."
+    Write-Host "Press any key to quit...";
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
+    Exit
+  }
+  Install-Module ExchangeOnlineManagement -Force -Confirm:$False
+  Write-Host -ForegroundColor Green "ExchangeOnlineManagement install successful!"; "Importing ExchangeOnlineManagement module."
+  Import-Module ExchangeOnlineManagement -DisableNameChecking
 }
-If(!(Test-Path -Path $Path)){New-Item -ItemType "Directory" -Path $Path *> $null}
+Else {
+  Write-Host -ForegroundColor Green "Importing ExchangeOnlineManagement module."
+  Import-Module ExchangeOnlineManagement -DisableNameChecking
+}
+If (!(Test-Path -Path $Path)) { New-Item -ItemType "Directory" -Path $Path *> $null }
   
 Write-Host -ForegroundColor Green "Connecting to ExchangeOnline..."
 Connect-ExchangeOnline -UserPrincipalName $GlobalAdmin
 Write-Host -ForegroundColor Green "Checking user blocklists..."
 
 Get-EXOMailbox -ResultSize Unlimited | ForEach-Object {
-    $Blocklist = Get-MailboxJunkEmailConfiguration -Identity $_.PrimarySMTPAddress
-    If ($Blocklist.BlockedSendersAndDomains) {
-        [PSCustomObject]@{
-            Name = $_.DisplayName
-            Email = $_.PrimarySMTPAddress
-            Blocklist = $Blocklist.BlockedSendersAndDomains
-        }
+  $Blocklist = Get-MailboxJunkEmailConfiguration -Identity $_.PrimarySMTPAddress
+  If ($Blocklist.BlockedSendersAndDomains) {
+    [PSCustomObject]@{
+      Name      = $_.DisplayName
+      Email     = $_.PrimarySMTPAddress
+      Blocklist = $Blocklist.BlockedSendersAndDomains
     }
+  }
 } | Export-CSV -Path $CSV -NoTypeInformation -Force
 
 Write-Host -ForegroundColor Green "Complete! Report has been saved in $CSV"

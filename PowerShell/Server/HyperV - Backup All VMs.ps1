@@ -44,7 +44,7 @@ ForEach ($Backup in $Backups){
     If ($Backup.CreationTime -lt (Get-Date).AddDays(-7)) {
         Write-Host "Deleting backup: $Backup"
         Try {
-            Remove-Item $Backup -Recurse
+            Remove-Item $Backup -Recurse -Confirm:$false
             Write-Host "Deleted backups from: $Backup"
             $TotalCleared++
         } Catch {

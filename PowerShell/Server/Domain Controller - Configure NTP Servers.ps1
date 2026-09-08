@@ -31,9 +31,13 @@ Write-Output "W32TM Config backup created.";"Saved to $LogPath\W32TM Config Old.
 
 ### Settings for Domain Controller
 $Win32BB = Get-CimInstance -ClassName Win32_BaseBoard
-If (($Win32BB).Manufacturer -eq "Microsoft Corporation" -And ($Win32BB).Product -eq "Virtual Machine"){
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\VMICTimeProvider" -Name "Enabled" -Value "0" -Force
+$IsHVVM = (($Win32BB).Manufacturer -eq "Microsoft Corporation" -And ($Win32BB).Product -eq "Virtual Machine")
+If ($IsHVVM -eq $True) {
+  Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\VMICTimeProvider" -Name "Enabled" -Value "1" -Force
+} else {
+  Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\VMICTimeProvider" -Name "Enabled" -Value "0" -Force
 }
+
 Stop-Service -Name "w32time"
 w32tm /unregister
 w32tm /register
